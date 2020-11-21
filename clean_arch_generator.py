@@ -168,7 +168,9 @@ def write_state(module, page_name_class, page_name_file):
         """
 /// Auto Generated State
 abstract class {0}State {{}}
-        """.format(page_name_class)
+
+class {1}StateStart extends {2}State {{}}
+        """.format(page_name_class, page_name_class, page_name_class)
     )
     tmp_file.close()
     tmp_file = open('lib/modules/{}/presentation/bloc/events/{}'.format(module,
