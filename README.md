@@ -14,6 +14,8 @@ Usage
     - After creating entities in 'modules/module_name/domain/entities', creates respository classes in 
       - lib/modules/module_name/data/repository
       - lib/modules/module_name/domain/repository
+  - Create a new page in UI
+    - Initializes Bloc & State & Event & Widget classes
   - New features will be added soon :)
       
  Example
