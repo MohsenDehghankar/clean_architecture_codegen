@@ -35,7 +35,7 @@ Usage
         - strings.dart
         - urls.dart
         - colors.dart
-    modules/
+    - modules/
       - my_first_module/
         - data/
           - datasource/
