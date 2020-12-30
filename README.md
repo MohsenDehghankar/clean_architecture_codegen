@@ -16,6 +16,7 @@ Usage
       - lib/modules/module_name/domain/repository
   - Create a new page in UI
     - Initializes Bloc & State & Event & Widget classes
+  - Creating a repository in data/repository with some existing datasources
   - New features will be added soon :)
       
  Example
