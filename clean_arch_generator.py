@@ -43,21 +43,23 @@ def init_arch():
 
 
 # path with no ending '/'
-def init_module(path):
+def init_module(path, have_domain):
     if os.system('cd ' + path) != 0:
         print('invalid path to module')
     # first layer
     os.makedirs(path + "/data")
-    os.makedirs(path + "/domain")
+    if have_domain:
+        os.makedirs(path + "/domain")
     os.makedirs(path + "/presentation")
     # second layer
     os.makedirs(path + "/data/datasource")
     os.makedirs(path + "/data/repository")
     os.makedirs(path + "/data/models")
     # second layer
-    os.makedirs(path + "/domain/entities")
-    os.makedirs(path + "/domain/repository")
-    os.makedirs(path + "/domain/usecases")
+    if (have_domain):
+        os.makedirs(path + "/domain/entities")
+        os.makedirs(path + "/domain/repository")
+        os.makedirs(path + "/domain/usecases")
     # seconds layer
     os.makedirs(path + "/presentation/bloc")
     os.makedirs(path + "/presentation/pages")
@@ -74,13 +76,24 @@ def add_module():
         return
 
     name = input("Name of module: ")
+    while True:
+        have_domain = input(
+            "Do you want your module to have domain directory?(1/0)  ")
+        if (have_domain == '1'):
+            have_domain = True
+            break
+        elif have_domain == '0':
+            have_domain = False
+            break
+        else:
+            print("input 0 or 1 in answer!")
 
     try:
         os.mkdir('lib/modules/' + name)
     except Exception:
         print('Invalid name')
         return
-    init_module('lib/modules/' + name)
+    init_module('lib/modules/' + name, have_domain)
 
 # exact path for repo, without ending '/'
 
@@ -323,6 +336,94 @@ class {3}State extends State<{4}> {{
     create_bloc(module, page_name_class, page_name_file)
     create_widget(module, page_name_class, page_name_file)
 
+def getSrcClassName(src_file, module_name):
+    if os.system('test -f lib/modules/' + module_name + '/data/datasource/' + src_file + ".dart") != 0:
+        print("invalid data source file name!")
+        return
+    
+    f = open('lib/modules/' + module_name + '/data/datasource/' + src_file + ".dart", 'r')
+    content = f.read()
+    f.close()
+    lines = content.split("\n")
+    for l in lines:
+        if "{" in l and "class" in l:
+            return(l.split()[1])
+    print("class name not found in " + src_file)
+    return -1
+
+
+def create_repo_data():
+    module = input('module name: ')
+    # check name of module
+    if os.system('cd lib/modules/' + module) != 0:
+        print('invalid module name!')
+        return
+
+    class_name = input("Name of your repository class: ")
+    file_name = input("Name of repository file without .dart: ")
+
+    if len(class_name.split()) > 1 or len(file_name.split()) > 1:
+        print("there should be no space in names!")
+        return
+
+    sources = input(
+        "Enter file names (without .dart) of datasources in \'data/datasource\' for this repository if any: ").split()
+    
+    src_names = []
+
+    for src in sources:
+        a = getSrcClassName(src, module)
+        if a != -1:
+            src_names.append(a)
+
+
+    # create page class file
+    if os.system('touch lib/modules/' + module + '/data/repository/' + file_name + '.dart') != 0:
+        print('Can\'t create the repo file in data/repository dir!')
+        return
+    # create the class inside the page class file
+    project_name = get_project_name()
+    classes = ""
+    for a in src_names:
+        b = a[0].lower() + a[1:]
+        classes += "\n" + a + " " + b + ";"
+    
+    const = ""
+    for a in src_names:
+        b = a[0].lower() + a[1:]
+        const += "this." + b + ","
+    
+    imps = ""
+    for a in src_names:
+        imps += "\n" + "import \'package:{0}/modules/{1}/data/datasource/{2}.dart\';".format(
+            get_project_name(),
+            module,
+            sources[src_names.index(a)]         
+        )
+
+    content = """
+{4}
+
+// auto generated repository class
+class {0} {{
+    {1}
+
+    {2}({3});
+
+}}
+    """.format(
+        class_name,
+        classes,
+        class_name,
+        const,
+        imps
+    )
+
+    repo_file = open(
+        'lib/modules/{0}/data/repository/{1}.dart'.format(module, file_name), 'w')
+    repo_file.write(content)
+    repo_file.close()
+
 
 if __name__ == "__main__":
 
@@ -331,14 +432,15 @@ if __name__ == "__main__":
 \nEnter a number:
     1)  initialize clean architecture packaging here
     2)  add a new module (feature)
-    3)  create \'repositories\' according to \'entities\' of a module
+    3)  create \'repositories\' according to \'entities\' for a module with domain section
     4)  create a new page in a module
-    5)  exit\n
+    5)  create a new repository in data/repository section
+    6)  exit\n
         """)
         cmd = int(input())
         if (cmd == 1):
             init_arch()
-        if (cmd == 5):
+        if (cmd == 6):
             exit()
         if (cmd == 2):
             add_module()
@@ -347,3 +449,5 @@ if __name__ == "__main__":
         if (cmd == 4):
             create_page()
             print('Don\'t forget to add dependencies to pubspec.yaml.')
+        if (cmd == 5):
+            create_repo_data()
